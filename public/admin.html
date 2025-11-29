@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — WASSCE Shop</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <h2>Admin</h2>
+    <p>This admin page uses Basic Auth for API. Use a REST client or the forms below and set Authorization header.</p>
+
+    <section>
+      <h3>Create Product</h3>
+      <form id="create-product">
+        <input name="name" placeholder="Product name" required />
+        <input name="price_cents" placeholder="Price in pesewas (e.g. 50000 = GHS 500.00)" required />
+        <textarea name="description" placeholder="Description"></textarea>
+        <button type="submit">Create</button>
+      </form>
+    </section>
+
+    <section>
+      <h3>Upload Codes (one per line)</h3>
+      <form id="upload-codes">
+        <input name="productId" placeholder="Product ID" required />
+        <textarea name="codes" placeholder="One code per line" rows="8"></textarea>
+        <button type="submit">Upload</button>
+      </form>
+    </section>
+
+    <section>
+      <h3>View Orders</h3>
+      <button id="load-orders">Load orders (requires Basic Auth)</button>
+      <pre id="orders-output"></pre>
+    </section>
+
+    <p><a href="/admin-analytics.html">Open Analytics Dashboard</a></p>
+  </main>
+
+  <script>
+  // Admin forms will ask for Basic auth credentials via prompt then call admin APIs.
+  document.getElementById('create-product').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = e.target.name.value, price_cents = parseInt(e.target.price_cents.value), description = e.target.description.value;
+    const auth = btoa(prompt('Admin username') + ':' + prompt('Admin password'));
+    const r = await fetch('/admin/api/product', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Basic ' + auth },
+      body: JSON.stringify({ name, price_cents, description })
+    });
+    alert(await r.text());
+  });
+
+  document.getElementById('upload-codes').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const productId = e.target.productId.value;
+    const codes = e.target.codes.value.split('\n').map(s => s.trim()).filter(Boolean);
+    const auth = btoa(prompt('Admin username') + ':' + prompt('Admin password'));
+    const r = await fetch('/admin/api/upload-codes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Basic ' + auth },
+      body: JSON.stringify({ productId, codes })
+    });
+    alert(await r.text());
+  });
+
+  document.getElementById('load-orders').addEventListener('click', async () => {
+    const auth = btoa(prompt('Admin username') + ':' + prompt('Admin password'));
+    const r = await fetch('/admin/api/orders', { headers: { Authorization: 'Basic ' + auth }});
+    const data = await r.json();
+    document.getElementById('orders-output').textContent = JSON.stringify(data, null, 2);
+  });
+  </script>
+</body>
+</html>
